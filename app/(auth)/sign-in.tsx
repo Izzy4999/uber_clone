@@ -8,6 +8,7 @@ import CustomButton from "@/components/CustomButton";
 import { Link, router } from "expo-router";
 import OAuth from "@/components/OAuth";
 import { useSignIn } from "@clerk/clerk-expo";
+import { Alert } from "react-native";
 
 const SignIn = () => {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -31,7 +32,8 @@ const SignIn = () => {
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
       }
-    } catch (err) {
+    } catch (err: any) {
+      Alert.alert(err.errors[0].longMessage);
       console.error(JSON.stringify(err, null, 2));
     }
   }, [isLoaded, form.email, form.password]);

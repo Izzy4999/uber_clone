@@ -7,24 +7,24 @@ import {
 } from "react-native";
 
 declare interface Driver {
-  id: number;
+  id: string | number;
   first_name: string;
   last_name: string;
   profile_image_url: string;
   car_image_url: string;
   car_seats: number;
-  rating: number;
+  rating: string | number;
 }
 
 declare interface MarkerData {
   latitude: number;
   longitude: number;
-  id: number;
+  id: string | number;
   title: string;
   profile_image_url: string;
   car_image_url: string;
   car_seats: number;
-  rating: number;
+  rating: string | number;
   first_name: string;
   last_name: string;
   time?: number;
@@ -40,22 +40,27 @@ declare interface MapProps {
 }
 
 declare interface Ride {
+  ride_id: number | string;
   origin_address: string;
   destination_address: string;
-  origin_latitude: number;
-  origin_longitude: number;
-  destination_latitude: number;
-  destination_longitude: number;
+  origin_latitude: number | string;
+  origin_longitude: number | string;
+  destination_latitude: number | string;
+  destination_longitude: number | string;
   ride_time: number;
-  fare_price: number;
+  fare_price: number | string;
   payment_status: string;
-  driver_id: number;
+  driver_id: number | string;
   user_id: string;
   created_at: string;
   driver: {
     first_name: string;
     last_name: string;
     car_seats: number;
+    driver_id: number | srting;
+    profile_image_url: string;
+    car_image_url: string;
+    rating: string;
   };
 }
 
@@ -71,7 +76,7 @@ declare interface ButtonProps extends TouchableOpacityProps {
 declare interface GoogleInputProps {
   icon?: string;
   initialLocation?: string;
-  containerStyle?: string;
+  containerStyle?: ViewStyle;
   textInputBackgroundColor?: string;
   handlePress: ({
     latitude,
