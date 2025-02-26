@@ -1,57 +1,109 @@
+import GoogleTextInput from "@/components/GoogleTextInput";
+import Map from "@/components/Map";
+import RideCard from "@/components/RideCard";
+import { icons, images, recentRides } from "@/constants";
+import { fontSizes, windowWidth } from "@/constants/app.constant";
 import { colors, fonts } from "@/constants/colors";
+import { LOCATION_TASK_NAME, useSocket } from "@/context/socket";
+import { useLocationStore } from "@/store";
+import { Driver, UserLocation } from "@/types/type";
 import { useUser } from "@clerk/clerk-expo";
+import { LegendList } from "@legendapp/list";
+import * as Location from "expo-location";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LegendList } from "@legendapp/list";
-import { icons, images, recentRides } from "@/constants";
-import RideCard from "@/components/RideCard";
-import { fontSizes, windowWidth } from "@/constants/app.constant";
-import React, { useEffect, useState } from "react";
-import GoogleTextInput from "@/components/GoogleTextInput";
-import Map from "@/components/Map";
-import { useLocationStore } from "@/store";
 
 export default function Page() {
   const { setDestinationLocation, setUserLocation } = useLocationStore();
+  const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
   const [hasPermission, setHasPermission] = useState(false);
   const { user } = useUser();
+  const socket = useSocket();
   const loading = true;
 
   const handleSignout = () => {};
-  const handleDestinationPress = () => {};
+  const handleDestinationPress = (location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }) => {
+    setDestinationLocation(location);
+
+    router.push("/(root)/find-ride");
+  };
 
   useEffect(() => {
     async function getCurrentLocation() {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
+      const { status: backgroundStatus } =
+        await Location.requestBackgroundPermissionsAsync();
+      console.log(backgroundStatus);
+      if (status !== "granted" && backgroundStatus !== "granted") {
         setHasPermission(false);
         return;
       }
 
       let location = await Location.getCurrentPositionAsync({});
 
+      console.log(location);
+
       const address = await Location.reverseGeocodeAsync({
         latitude: location.coords?.latitude,
         longitude: location.coords?.longitude,
       });
+
+      console.log(address);
 
       setUserLocation({
         address: `${address[0].name}, ${address[0].region}`,
         latitude: location.coords?.latitude,
         longitude: location.coords?.longitude,
       });
-    }
 
+      const data: UserLocation = {
+        userId: user?.id!,
+        lat: location.coords?.latitude,
+        lon: location.coords?.longitude,
+      };
+
+      socket.emit("userLocation", data);
+    }
     getCurrentLocation();
+
+    // Listen for nearby drivers from the server
+    socket.on("nearbyDrivers", (drivers: Driver[]) => {
+      setNearbyDrivers(drivers);
+    });
+
+    return () => {
+      socket.off("nearbyDrivers");
+    };
   }, []);
+
+  console.log(nearbyDrivers);
+
+  // useEffect(() => {
+  //   // let subscription: Location.LocationSubscription;
+  //   (async () => {
+  //     await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+  //       accuracy: Location.Accuracy.High,
+  //       timeInterval: 5000, // Minimum time interval (in milliseconds) between updates
+  //       distanceInterval: 10, // Minimum change (in meters) before an update is triggered
+  //       // iOS-specific option: show indicator when location is tracked in background
+  //       showsBackgroundLocationIndicator: true,
+  //     });
+  //   })();
+  // }, [socket]);
 
   return (
     <SafeAreaView style={styles.container}>

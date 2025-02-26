@@ -1,4 +1,12 @@
-import { View, Text, ScrollView, StyleSheet, Image, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Image,
+  Alert,
+  Platform,
+} from "react-native";
 import React, { useState } from "react";
 import { icons, images } from "@/constants";
 import { fontSizes, windowWidth } from "@/constants/app.constant";
@@ -9,13 +17,17 @@ import { Link, router } from "expo-router";
 import OAuth from "@/components/OAuth";
 import { useSignUp } from "@clerk/clerk-expo";
 import ReactNativeModal from "react-native-modal";
+import { useMutation } from "@tanstack/react-query";
 import { fetchAPI } from "@/libs/fetch";
+import { createUser } from "@/api/user";
+import { AxiosError } from "axios";
+import { SignUpResource } from "@clerk/types";
 
 const SignUp = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [signUpCompleted, setSignUpcompleted] = useState<SignUpResource>();
   const [form, setForm] = React.useState({
-    name: "",
     email: "",
     password: "",
   });
@@ -23,6 +35,19 @@ const SignUp = () => {
     state: "default",
     error: "",
     code: "",
+  });
+
+  const { mutate, isSuccess } = useMutation({
+    mutationFn: createUser,
+    onSuccess: async (data) => {
+      await setActive!({ session: signUpCompleted!.createdSessionId });
+      setVerification({ ...verification, state: "success", error: "" });
+      console.log(data);
+    },
+    onError: async (err) => {
+      // console.log(err)
+      // console.error((err as AxiosError).response);
+    },
   });
 
   // Handle submission of sign-up form
@@ -64,18 +89,11 @@ const SignUp = () => {
       // and redirect the user
       if (signUpAttempt.status === "complete") {
         // TODO: Create a database user!
-
-        await fetchAPI("/(api)/user", {
-          method: "POST",
-          body: JSON.stringify({
-            name: form.name,
-            email: form.email,
-            clerkId: signUpAttempt.createdUserId,
-          }),
+        setSignUpcompleted(signUpAttempt);
+        mutate({
+          email: form.email,
+          clerk_id: signUpAttempt.createdUserId!,
         });
-        await setActive({ session: signUpAttempt.createdSessionId });
-        setVerification({ ...verification, state: "success", error: "" });
-        // router.replace("/");
       } else {
         setVerification({
           ...verification,
@@ -107,19 +125,20 @@ const SignUp = () => {
           <Text style={styles.imageText}>Create your account</Text>
         </View>
         <View style={{ padding: windowWidth(20) }}>
-          <InputField
+          {/* <InputField
             label="Name"
             placeholder="Enter your name"
             icon={icons.person}
             value={form.name}
             onChangeText={(text) => setForm({ ...form, name: text })}
-          />
+          /> */}
           <InputField
             label="Email"
             placeholder="Enter you email"
             icon={icons.email}
             value={form.email}
             onChangeText={(text) => setForm({ ...form, email: text })}
+            placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
             keyboardType="email-address"
           />
           <InputField
@@ -127,6 +146,7 @@ const SignUp = () => {
             placeholder="Enter your password"
             icon={icons.lock}
             value={form.password}
+            placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
             onChangeText={(text) => setForm({ ...form, password: text })}
             secureTextEntry
           />

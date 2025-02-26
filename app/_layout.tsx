@@ -6,13 +6,16 @@ import React, { useEffect } from "react";
 import "react-native-reanimated";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { tokenCache } from "@/libs/auth";
+import "react-native-get-random-values";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SocketProvider } from "@/context/socket";
 // import { Slot } from "expo-router";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 if (!publishableKey) {
   throw new Error(
-    "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env",
+    "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
   );
 }
 
@@ -40,19 +43,28 @@ export default function RootLayout() {
     return null;
   }
 
+  const queryClient = new QueryClient();
+
   return (
     <>
-      <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
-        <ClerkLoaded>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(root)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ClerkLoaded>
-      </ClerkProvider>
+      <SocketProvider>
+        <QueryClientProvider client={queryClient}>
+          <ClerkProvider
+            tokenCache={tokenCache}
+            publishableKey={publishableKey}
+          >
+            <ClerkLoaded>
+              <Stack>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="(root)" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="auto" />
+            </ClerkLoaded>
+          </ClerkProvider>
+        </QueryClientProvider>
+      </SocketProvider>
     </>
   );
 }

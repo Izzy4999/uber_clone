@@ -12,6 +12,7 @@ import {
 
 import { InputFieldProps } from "@/types/type";
 import { fontSizes, windowWidth } from "@/constants/app.constant";
+import { fonts } from "@/constants/colors";
 
 const InputField = ({
   label,
@@ -21,6 +22,7 @@ const InputField = ({
   containerStyle,
   inputStyle,
   iconStyle,
+  iconRight,
   ...props
 }: InputFieldProps) => {
   return (
@@ -37,6 +39,9 @@ const InputField = ({
               secureTextEntry={secureTextEntry}
               {...props}
             />
+            {iconRight && (
+              <Image source={iconRight} style={[styles.icon, iconStyle]} />
+            )}
           </View>
         </View>
       </TouchableWithoutFeedback>
@@ -51,7 +56,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSizes.FONT20, // Equivalent to text-lg
-    fontFamily: "JakartaSemiBold",
+    fontFamily: fonts.JakartaSemiBold[0],
     marginBottom: windowWidth(12), // Equivalent to mb-3
   },
   inputContainer: {
@@ -71,7 +76,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 999, // Equivalent to rounded-full
     padding: windowWidth(16), // Equivalent to p-4
-    fontFamily: "JakartaSemiBold",
+    fontFamily: fonts.JakartaSemiBold[0],
     fontSize: fontSizes.FONT16, // Equivalent to text-[15px]
     textAlign: "left", // Equivalent to text-left
   },

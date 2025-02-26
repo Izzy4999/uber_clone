@@ -25,6 +25,7 @@ export default function Map() {
   });
 
   useEffect(() => {
+    setDrivers(mockedDrivers)
     if (Array.isArray(mockedDrivers)) {
       if (!userLatitude || !userLongitude) {
         return;

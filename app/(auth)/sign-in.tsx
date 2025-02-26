@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet, Image } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Image, Platform } from "react-native";
 import React, { useCallback } from "react";
 import { icons, images } from "@/constants";
 import { windowWidth } from "@/constants/app.constant";
@@ -58,6 +58,7 @@ const SignIn = () => {
             icon={icons.email}
             value={form.email}
             onChangeText={(text) => setForm({ ...form, email: text })}
+            placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
           />
           <InputField
             label="Password"
@@ -65,6 +66,7 @@ const SignIn = () => {
             icon={icons.lock}
             value={form.password}
             onChangeText={(text) => setForm({ ...form, password: text })}
+            placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
             secureTextEntry
           />
 
