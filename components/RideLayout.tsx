@@ -22,7 +22,6 @@ export default function RideLayout({
 }) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={{ flex: 1, backgroundColor: "white" }}>
         <View style={{ height: "100%", backgroundColor: "blue" }}>
           <View
@@ -70,7 +69,6 @@ export default function RideLayout({
           </BottomSheetView>
         </BottomSheet>
       </View>
-    </GestureHandlerRootView>
   );
 }
 

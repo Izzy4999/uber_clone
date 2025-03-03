@@ -7,11 +7,27 @@ import "react-native-reanimated";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { tokenCache } from "@/libs/auth";
 import "react-native-get-random-values";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  focusManager,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { SocketProvider } from "@/context/socket";
+import { AppStateStatus, Platform } from "react-native";
+import { useOnlineManager } from "@/hooks/useOnlineManager";
+import { useAppState } from "@/hooks/useAppSate";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 // import { Slot } from "expo-router";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+
+function onAppStateChange(status: AppStateStatus) {
+  // React Query already supports in web browser refetch on window focus by default
+  if (Platform.OS !== "web") {
+    focusManager.setFocused(status === "active");
+  }
+}
 
 if (!publishableKey) {
   throw new Error(
@@ -33,6 +49,10 @@ export default function RootLayout() {
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
 
+  useOnlineManager();
+
+  useAppState(onAppStateChange);
+
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
@@ -47,24 +67,34 @@ export default function RootLayout() {
 
   return (
     <>
-      <SocketProvider>
-        <QueryClientProvider client={queryClient}>
-          <ClerkProvider
-            tokenCache={tokenCache}
-            publishableKey={publishableKey}
-          >
+      <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+        <SocketProvider>
+          <QueryClientProvider client={queryClient}>
             <ClerkLoaded>
-              <Stack>
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(root)" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="auto" />
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <BottomSheetModalProvider>
+                  <Stack>
+                    <Stack.Screen
+                      name="index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(auth)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(root)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <StatusBar style="auto" />
+                </BottomSheetModalProvider>
+              </GestureHandlerRootView>
             </ClerkLoaded>
-          </ClerkProvider>
-        </QueryClientProvider>
-      </SocketProvider>
+          </QueryClientProvider>
+        </SocketProvider>
+      </ClerkProvider>
     </>
   );
 }

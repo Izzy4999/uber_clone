@@ -14,8 +14,34 @@ export const updateUserProfile = async ({
   id: string;
 }) => {
   const response = await client.put(
-    `/api/users/user/${id}`,
-    {  },
+    `/api/users/user/me`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const becomeDriver = async ({
+  token,
+  ...rest
+}: {
+  token: string;
+  carMake: string;
+  carModel: string;
+  carYear: string;
+  plate: string;
+  carColor: string;
+  carSeats: string;
+  carImage: string;
+}) => {
+  const response = await client.put(
+    "/api/users/user/driver",
+    { ...rest },
     {
       headers: {
         Authorization: `Bearer ${token}`,

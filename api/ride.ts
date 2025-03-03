@@ -19,7 +19,7 @@ export const createRide = async ({
 }) => {
   const response = await client.post(
     "/api/rides",
-    { rest },
+    { ...rest },
     {
       headers: {
         Authorization: `Bearer ${token}`,

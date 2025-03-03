@@ -137,10 +137,12 @@ declare interface LocationStore {
 }
 
 declare interface DriverStore {
+  status: "pending" | "approved" | "denied" | "notApplied";
   drivers: MarkerData[];
   selectedDriver: number | null;
   setSelectedDriver: (driverId: number) => void;
   setDrivers: (drivers: MarkerData[]) => void;
+  setStatus: (stat: "pending" | "approved" | "denied" | "notApplied") => void;
   clearSelectedDriver: () => void;
 }
 

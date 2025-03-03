@@ -1,45 +1,98 @@
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetView,
+  useBottomSheetModal,
+} from "@gorhom/bottom-sheet";
 import {
   Image,
-  ScrollView,
-  Text,
-  View,
-  StyleSheet,
-  TouchableOpacity,
   Platform,
-  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import * as ImagePicker from "expo-image-picker";
-import InputField from "@/components/InputField";
-import { fontSizes, windowWidth } from "@/constants/app.constant";
-import { colors, fonts } from "@/constants/colors";
-import { useMutation } from "@tanstack/react-query";
-import { updateUserProfile } from "@/api/user";
+import { becomeDriver, updateUserProfile } from "@/api/user";
 import CustomButton from "@/components/CustomButton";
-import { useState } from "react";
-import ReactNativeModal from "react-native-modal";
-import { icons } from "@/constants";
+import InputField from "@/components/InputField";
+import { windowWidth } from "@/constants/app.constant";
+import { colors, fonts } from "@/constants/colors";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useMutation } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Cloudinary } from "@cloudinary/url-gen";
+import { upload } from "cloudinary-react-native";
+import { AxiosError } from "axios";
+import { useDriverStore } from "@/store";
+import React from "react";
+import CustomActivityIndicator from "@/components/CustomIndicator";
+
+const cloundName = "dmxxcut67";
+
+const cloud = new Cloudinary({
+  cloud: {
+    cloudName: cloundName,
+  },
+  url: {
+    secure: true,
+  },
+});
+
+const options = {
+  upload_preset: "ml_default",
+  unsigned: true,
+  // folder: "uber"
+};
 
 const Profile = () => {
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["78%"], []);
+  const { dismiss } = useBottomSheetModal();
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const { status, setStatus } = useDriverStore();
+
   const [firstName, setFirstName] = useState(user?.firstName);
   const [lastName, setLastName] = useState(user?.lastName);
   const [phoneNumber, setPhoneNumber] = useState(
     user?.unsafeMetadata?.phoneNumber! as string
   );
-  // const [phoneId, setPhoneId] = useState();
-  const [verification, setVerification] = useState({
-    state: "default",
-    error: "",
-    code: "",
+  const [driverData, setDriverData] = useState({
+    carMake: "",
+    carModel: "",
+    carYear: "",
+    plate: "",
+    carColor: "",
+    carSeats: "",
   });
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [uploading, setUploading] = useState(false);
+  // const [verification, setVerification] = useState({
+  //   state: "default",
+  //   error: "",
+  //   code: "",
+  // });
 
   const { mutate, isPending } = useMutation({
     mutationFn: updateUserProfile,
     onSuccess: (data) => {},
+  });
+  const { mutate: driverMutate, isPending: driverPending } = useMutation({
+    mutationFn: becomeDriver,
+    onSuccess: (data) => {
+      dismiss();
+      setStatus("pending");
+    },
+    onError: (err) => {
+      console.log("Driver Error", (err as AxiosError).response);
+    },
   });
 
   const handleImageUpload = async () => {
@@ -73,9 +126,12 @@ const Profile = () => {
         return;
       }
 
-      const token = await getToken();
+      const token = await getToken({
+        template: "testing-template",
+      });
+      console.log(token)
 
-      const updatedPhone = "+234" + phoneNumber.slice(1);
+      const updatedPhone = "+234" + phoneNumber?.slice(1);
 
       // const phone = await user?.createPhoneNumber({
       //   phoneNumber: updatedPhone,
@@ -85,22 +141,52 @@ const Profile = () => {
 
       // await phone!.prepareVerification();
       // setVerification({ ...verification, state: "pending" });
-      await user?.update({
-        firstName: firstName!,
-        lastName: lastName!,
-        unsafeMetadata: {
-          phoneNumber: updatedPhone,
-        },
-      });
-      mutate({
-        token: token!,
-        id: user?.id!,
-      });
+      // await user?.update({
+      //   firstName: firstName!,
+      //   lastName: lastName!,
+      //   unsafeMetadata: {
+      //     phoneNumber: updatedPhone,
+      //   },
+      // });
+      // mutate({
+      //   token: token!,
+      //   id: user?.id!,
+      // });
     } catch (error) {
       console.log(error);
     }
   };
 
+  // Function to pick an image
+  const carImageUpload = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      // result.assets[0].uri contains the local URI
+      setImage(result.assets[0]);
+    }
+  };
+
+  // callbacks
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.present();
+  }, []);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior={"none"}
+        {...props}
+      />
+    ),
+    []
+  );
   // Handle submission of verification form
   // const onVerifyPress = async () => {
   //   if (!isLoaded) return;
@@ -122,10 +208,77 @@ const Profile = () => {
   //   }
   // };
 
+  const handleDriverSubmit = async () => {
+    try {
+      if (Object.values(driverData).some((value) => value.trim() === "")) {
+        alert("Please fill in all fields");
+        return;
+      }
+      const token = await getToken();
+      await upload(cloud, {
+        file: image?.uri,
+        options: options,
+        callback: (err: any, response: any) => {
+          if (err) {
+            console.log(err);
+            return;
+          }
+
+          driverMutate({
+            token: token!,
+            carImage: response.secure_url,
+            ...driverData,
+          });
+        },
+      });
+    } catch (error: any) {
+      console.error(JSON.stringify(error, null, 2));
+    }
+  };
+
+  useEffect(() => {
+    if (user?.publicMetadata?.driverStatus) {
+      setStatus(
+        user.publicMetadata.driverStatus as
+          | "notApplied"
+          | "pending"
+          | "approved"
+          | "denied"
+      );
+    }
+  }, [user]);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>My profile</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.title}>My profile</Text>
+          {status === "pending" ? (
+            <Text style={{ fontFamily: fonts.JakartaSemiBold[0] }}>
+              Awating Approval
+            </Text>
+          ) : status === "notApplied" ? (
+            <TouchableOpacity hitSlop={10} onPress={handlePresentModalPress}>
+              <Text style={{ fontFamily: fonts.JakartaSemiBold[0] }}>
+                Become a driver
+              </Text>
+            </TouchableOpacity>
+          ) : status === "denied" ? (
+            <Text style={{ fontFamily: fonts.JakartaSemiBold[0] }}>
+              Awating Approval
+            </Text>
+          ) : (
+            <Text style={{ fontFamily: fonts.JakartaSemiBold[0] }}>
+              Update Car Details
+            </Text>
+          )}
+        </View>
 
         <View style={[styles.imageContainer, { position: "relative" }]}>
           <Image
@@ -193,9 +346,9 @@ const Profile = () => {
 
             <InputField
               label="Phone"
-              value={"0" + phoneNumber.slice(4)}
+              // value={"0" + phoneNumber?.slice(4)}
               placeholder={
-                (user?.unsafeMetadata?.phoneNumbera as string) || "Not Found"
+                (user?.unsafeMetadata?.phoneNumber as string) || "Not Found"
               }
               containerStyle={{ width: "100%" }}
               inputStyle={{ padding: 14 }}
@@ -212,6 +365,90 @@ const Profile = () => {
           style={{ marginTop: 30 }}
         />
       </ScrollView>
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        snapPoints={snapPoints}
+        overDragResistanceFactor={0}
+        backdropComponent={renderBackdrop}
+        handleIndicatorStyle={{ display: "none" }}
+
+        // onChange={handleSheetChanges}
+      >
+        <BottomSheetView style={{ flex: 1, paddingHorizontal: 20 }}>
+          <CustomActivityIndicator visible={uploading || driverPending} />
+          <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+            <TouchableOpacity hitSlop={30} onPress={() => dismiss()}>
+              <AntDesign name="closecircleo" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
+          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+            <InputField
+              label="Plate Number"
+              placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
+              // value={driverData.plate}
+              onChangeText={(e) => setDriverData({ ...driverData, plate: e })}
+            />
+            <InputField
+              label="Car Make"
+              placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
+              // value={driverData.carMake}
+              onChangeText={(e) => setDriverData({ ...driverData, carMake: e })}
+            />
+            <InputField
+              label="Car Model"
+              placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
+              // value={driverData.carModel}
+              onChangeText={(e) =>
+                setDriverData({ ...driverData, carModel: e })
+              }
+            />
+            <InputField
+              label="Car Year"
+              placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
+              // value={driverData.carYear}
+              onChangeText={(e) => setDriverData({ ...driverData, carYear: e })}
+            />
+            <InputField
+              label="Car Seats"
+              placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
+              // value={driverData.carSeats}
+              onChangeText={(e) =>
+                setDriverData({ ...driverData, carSeats: e })
+              }
+            />
+            <InputField
+              label="Car Color"
+              placeholderTextColor={Platform.OS === "ios" ? "black" : "#3d3d3d"}
+              // value={driverData.carColor}
+              onChangeText={(e) =>
+                setDriverData({ ...driverData, carColor: e })
+              }
+            />
+            <TouchableOpacity
+              style={{ marginTop: 10 }}
+              onPress={carImageUpload}
+            >
+              {image ? (
+                <Image
+                  source={{ uri: image.uri }}
+                  style={{ width: windowWidth(150), height: windowWidth(150) }}
+                />
+              ) : (
+                <Ionicons
+                  name="image"
+                  size={windowWidth(150)}
+                  color={colors.success[400]}
+                />
+              )}
+            </TouchableOpacity>
+            <CustomButton
+              title="Submit for review"
+              style={{ marginVertical: 15 }}
+              onPress={handleDriverSubmit}
+            />
+          </BottomSheetScrollView>
+        </BottomSheetView>
+      </BottomSheetModal>
       {/* <ReactNativeModal
         isVisible={verification.state === "pending"}
         onModalHide={() => {

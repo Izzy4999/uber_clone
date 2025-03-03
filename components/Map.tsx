@@ -14,7 +14,7 @@ export default function Map() {
     destinationLongitude,
   } = useLocationStore();
 
-  const { selectedDriver, setDrivers } = useDriverStore();
+  const { selectedDriver, setDrivers, drivers } = useDriverStore();
   const [markers, setMarkers] = useState<MarkerData[]>([]);
 
   const region = calculateRegion({
@@ -25,20 +25,22 @@ export default function Map() {
   });
 
   useEffect(() => {
-    setDrivers(mockedDrivers)
+    // setDrivers(mockedDrivers)
     if (Array.isArray(mockedDrivers)) {
       if (!userLatitude || !userLongitude) {
         return;
       }
 
-      const newMarkers = generateMarkersFromData({
-        data: mockedDrivers,
-        userLatitude,
-        userLongitude,
-      });
-      setMarkers(newMarkers);
+      // const newMarkers = generateMarkersFromData({
+      //   data: mockedDrivers,
+      //   userLatitude,
+      //   userLongitude,
+      // });
+      setMarkers(drivers);
     }
-  }, [mockedDrivers]);
+  }, [drivers]);
+
+  console.log(drivers)
 
   return (
     <MapView
