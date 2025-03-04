@@ -126,10 +126,7 @@ const Profile = () => {
         return;
       }
 
-      const token = await getToken({
-        template: "testing-template",
-      });
-      console.log(token)
+      const token = await getToken();
 
       const updatedPhone = "+234" + phoneNumber?.slice(1);
 
@@ -141,17 +138,17 @@ const Profile = () => {
 
       // await phone!.prepareVerification();
       // setVerification({ ...verification, state: "pending" });
-      // await user?.update({
-      //   firstName: firstName!,
-      //   lastName: lastName!,
-      //   unsafeMetadata: {
-      //     phoneNumber: updatedPhone,
-      //   },
-      // });
-      // mutate({
-      //   token: token!,
-      //   id: user?.id!,
-      // });
+      await user?.update({
+        firstName: firstName!,
+        lastName: lastName!,
+        unsafeMetadata: {
+          phoneNumber: updatedPhone,
+        },
+      });
+      mutate({
+        token: token!,
+        id: user?.id!,
+      });
     } catch (error) {
       console.log(error);
     }

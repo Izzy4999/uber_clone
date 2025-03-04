@@ -38,6 +38,11 @@ export default function ConfirmRide() {
         visibilityTime: 5000,
       });
     });
+
+    return () => {
+      socket.off("rideRequestResponse");
+      socket.emit("cancel-request");
+    };
   }, [socket]);
 
   return (

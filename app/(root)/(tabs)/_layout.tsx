@@ -59,6 +59,10 @@ export default function Layout() {
         });
       });
     }
+
+    return () => {
+      socket.off("new-ride-request");
+    };
   }, [socket]);
 
   return (

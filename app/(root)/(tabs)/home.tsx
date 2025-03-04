@@ -99,7 +99,7 @@ export default function Page() {
   useEffect(() => {
     // Listen for nearby drivers from the server
     socket.on("nearbyDrivers", (drivers) => {
-      console.log(drivers, Platform.OS);
+      // console.log(drivers, Platform.OS);
       setDrivers(drivers);
       // setNearbyDrivers(drivers);
     });

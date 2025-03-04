@@ -40,7 +40,7 @@ export default function Map() {
     }
   }, [drivers]);
 
-  console.log(drivers)
+  // console.log(drivers)
 
   return (
     <MapView

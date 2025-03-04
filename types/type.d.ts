@@ -168,3 +168,20 @@ declare interface UserLocation {
   lat: number;
   lon: number;
 }
+
+declare interface PassengerRequest {
+  currentLang: number;
+  currentLon: number;
+  destLat: number;
+  destLon: number;
+  passengerId: string;
+  user: {
+    clerk_id: string;
+    email: string;
+    first_name: string | null;
+    id: number;
+    last_name: string | null;
+    phone: string | null;
+    profile_image_url: string | null;
+  };
+}
