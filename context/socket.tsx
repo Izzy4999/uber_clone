@@ -10,7 +10,7 @@ import { io, Socket } from "socket.io-client";
 import * as TaskManager from "expo-task-manager";
 import { useAuth } from "@clerk/clerk-react";
 
-const SOCKET_URL = "http://192.168.88.52:6000"; // Update with your Socket.io server URL
+const SOCKET_URL = "http://192.168.0.130:6000"; // Update with your Socket.io server URL
 
 // Create a context with Socket type or null
 const SocketContext = createContext<Socket | null>(null);
@@ -31,6 +31,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     if (isSignedIn) {
       const newSocket = io(SOCKET_URL, {
         transports: ["websocket"],
+        reconnectionAttempts: 10,
+        reconnectionDelay: 3500,
       });
       setSocket(newSocket);
 
@@ -54,7 +56,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       //     }
       //   });
 
+      newSocket.on("connect", () => {
+        console.log("Socket connected:", newSocket.id);
+      });
+
       // Clean up the socket connection when the provider unmounts
+      newSocket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error.message);
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        console.warn("Socket disconnected:", reason);
+      });
       return () => {
         newSocket.disconnect();
         setSocket(null);

@@ -95,12 +95,11 @@ export default function Page() {
     }
     getCurrentLocation();
   }, []);
-  
 
   useEffect(() => {
     // Listen for nearby drivers from the server
     socket.on("nearbyDrivers", (drivers) => {
-      // console.log(drivers)
+      console.log(drivers, Platform.OS);
       setDrivers(drivers);
       // setNearbyDrivers(drivers);
     });

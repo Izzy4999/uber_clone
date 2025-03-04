@@ -36,7 +36,7 @@ async function decryptData(encryptedData: string, iv: string) {
 }
 
 const axiosInstance = axios.create({
-  baseURL: "http://192.168.88.52:6000",
+  baseURL: "http://192.168.0.130:6000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

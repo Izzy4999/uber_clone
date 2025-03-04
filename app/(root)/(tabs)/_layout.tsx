@@ -1,7 +1,10 @@
 import { icons } from "@/constants";
 import { colors } from "@/constants/colors";
-import { Tabs } from "expo-router";
-import React from "react";
+import { useSocket } from "@/context/socket";
+import { useUser } from "@clerk/clerk-expo";
+import { router, Tabs } from "expo-router";
+import React, { useEffect } from "react";
+import Toast from "react-native-toast-message";
 import {
   Image,
   ImageSourcePropType,
@@ -40,6 +43,24 @@ const TabIcon = ({
 );
 
 export default function Layout() {
+  const { user } = useUser();
+  const socket = useSocket();
+  useEffect(() => {
+    if (user?.publicMetadata?.role && user?.publicMetadata?.role === "driver") {
+      socket.on("new-ride-request", (data) => {
+        Toast.show({
+          type: "info",
+          text1: "New Ride",
+          text2: "Request from users",
+          onPress: () => {
+            Toast.hide();
+            router.push("/(root)/view-requests");
+          },
+        });
+      });
+    }
+  }, [socket]);
+
   return (
     <Tabs
       // initialRouteName="home"
